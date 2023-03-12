@@ -36,6 +36,14 @@ download_js_files() {
     done
 }
 
+find_and_replace_webpack_paths_in_html_files() {
+    html_files=($(find -type f -iname "*.html"))
+
+    for html in "${html_files[@]}"; do
+        sed --in-place --expression "s/\/webpack\//webpack\//g" "$html"
+    done
+}
+
 download_website_with_httrack
 
 pushd "$web_path/$base_url/webpack"
@@ -43,3 +51,9 @@ pushd "$web_path/$base_url/webpack"
     download_js_files
 
 popd
+
+# pushd "$web_path/$base_url"
+
+#     find_and_replace_webpack_paths_in_html_files
+
+# popd
