@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk=self.webpackChunk||[]).push([[6039],{6566:function(i,n,o){o.r(n),n.default=i=>{if("click:INTERNAL_LINK"===i.name)i.detail.path&&window.location.origin&&(window.location.href="".concat(window.location.origin).concat(i.detail.path))}}}]);

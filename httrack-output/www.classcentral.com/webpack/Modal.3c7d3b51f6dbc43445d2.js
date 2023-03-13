@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk=self.webpackChunk||[]).push([[1896],{1054:function(e,n,a){a.r(n);var i=a(9894),l=a(3443);(0,i.IW)({modal:{}}),n.default=e=>{if("click:MODAL_CLOSE"===e.name){var n;if((0,l.IY)({event:e.originalEvent,cushion:0,container:".cmpt-modal-container"})&&(null===(n=e.detail)||void 0===n||!n.close))return;(0,i.sY)("modal")}}}}]);

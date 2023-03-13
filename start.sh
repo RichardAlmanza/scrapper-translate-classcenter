@@ -67,4 +67,4 @@ docker run \
     --name local-classcentral \
     --rm \
     -v $PWD/httrack-output/www.classcentral.com:/usr/share/nginx/html:ro \
-    --detach --publish 8080:80
+    --detach --publish 8080:80 nginx

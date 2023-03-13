@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk=self.webpackChunk||[]).push([[7947],{410:function(e,a,t){t.r(a);var c=t(3443),n=t(8785);a.default=e=>{if("click:HIDE_LANG_DIALOG"===e.name)(0,c.px)("[data-name=".concat(e.detail.target,"]")).then((e=>{e.remove()})),(0,n.Z)("LOCALIZATION/HIDE_LANG_DIALOG")}}}]);
