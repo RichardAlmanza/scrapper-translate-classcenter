@@ -9,6 +9,7 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 class GoogleTranslator():
+    _chunkSizeForTranslations = 4000 # Google's limit is 5000 characters
     _textId = 0
     _texts = {}
     _translations = {}
@@ -38,7 +39,7 @@ class GoogleTranslator():
 
         for text in textsToTranslate:
             if text not in self._texts:
-                textListToTranslate.append(f'X{self._textId}: {text}')
+                textListToTranslate.append(f'X{self._textId}: "{text}"')
                 self._texts[text] = str(self._textId)
                 self._textId += 1
 
@@ -64,7 +65,7 @@ class GoogleTranslator():
 
 
     def _saveTranslations(self, elements) -> None:
-        regexPatternTranslation = re.compile("^X(\d+): (.+)")
+        regexPatternTranslation = re.compile("^X(\d+): \"(.+)\"")
 
         for element in elements:
             translation = str(element.string)
@@ -94,6 +95,31 @@ class GoogleTranslator():
         return results
 
 
+    def _createChucks(self, textsToTranslate: str) -> list[str]:
+        textChunks = []
+
+        pointerStart = 0
+        lastIndex = 0
+        index = 0
+        offset = 0
+
+        try:
+            while True:
+                while index - offset < self._chunkSizeForTranslations:
+                    lastIndex = index + 1
+                    index = textsToTranslate.index("\n", lastIndex)
+
+                textChunks.append(textsToTranslate[pointerStart:lastIndex - 1])
+                pointerStart = lastIndex
+                lastIndex = pointerStart
+                offset = pointerStart
+
+        except ValueError:
+            textChunks.append(textsToTranslate[pointerStart:])
+
+        return textChunks
+
+
     def translate(self, textsToTranslate: Union[str, list[str]], sourceLanguage: str = "en",
                   destinationLanguage: str = "hi") -> dict[str, str]:
 
@@ -102,13 +128,15 @@ class GoogleTranslator():
 
         newTextsToTranslate = self._addTextsToTranslate(textsToTranslate)
         joinedTextToTranslate = "\n".join(newTextsToTranslate)
+        textChucks = self._createChucks(joinedTextToTranslate)
 
-        if joinedTextToTranslate != "":
-            url = self._getUrlForTranslation(joinedTextToTranslate, sourceLanguage, destinationLanguage)
-            self._driver.get(url)
+        for textChuck in textChucks:
+            if textChuck != "":
+                url = self._getUrlForTranslation(textChuck, sourceLanguage, destinationLanguage)
+                self._driver.get(url)
 
-            translations = self._getResponse()
-            self._saveTranslations(translations)
+                translations = self._getResponse()
+                self._saveTranslations(translations)
 
         return self._returnTranslations(textsToTranslate)
 
