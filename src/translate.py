@@ -24,6 +24,9 @@ class GoogleTranslator():
         self._chromeOptions = Options()
 
         for option in options:
+            if option == "":
+                continue
+
             self._chromeOptions.add_argument(option)
 
         self._driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=self._chromeOptions)
