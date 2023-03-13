@@ -1,10 +1,11 @@
 import sys
 import re
 from bs4 import BeautifulSoup
-from bs4.element import Comment, Doctype, NavigableString
+from bs4.element import Comment, Doctype, NavigableString, Tag
 from translate import GoogleTranslator
 
 translator = GoogleTranslator()
+attributesToTranslate = set(["placeholder", "aria-label", "alt"])
 tagsToIgnore = set(["script","style","svg","link"])
 typesToIgnore = set([Comment, Doctype])
 ignoreText = set([
@@ -40,6 +41,17 @@ def loadBulkToTranslate(parentElement):
     translateBulk(textList)
 
 
+def translateAttributes(func, element, attr):
+    if element[attr] == "":
+        return
+
+    if func != translateContent:
+        func(NavigableString(element[attr]))
+    else:
+        translation = translator.translate(element[attr], "en", "hi")
+        element[attr] = translation[element[attr]]
+
+
 def findContent(func, parentElement):
     for element in parentElement.children:
 
@@ -50,6 +62,11 @@ def findContent(func, parentElement):
 
         if element.name in tagsToIgnore:
             continue
+
+        if type(element) == Tag:
+            for attr in attributesToTranslate:
+                if attr in element.attrs:
+                    translateAttributes(func, element, attr)
 
         if element.string == None:
             if element.contents != []:
@@ -68,7 +85,7 @@ def findContent(func, parentElement):
 def translateContentAfterBulkTranslation(parentElement):
     findContent(translateContent, parentElement)
 
-htmlPath = "/home/anaeru/repositories/personal/scrapper-translate-classcenter/httrack-output/www.classcentral.com/index.html" # sys.argv[1]
+htmlPath = sys.argv[1]
 
 with open(htmlPath, "r") as file:
     html = file.read()

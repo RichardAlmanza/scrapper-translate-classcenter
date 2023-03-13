@@ -65,7 +65,7 @@ class GoogleTranslator():
 
 
     def _saveTranslations(self, elements) -> None:
-        regexPatternTranslation = re.compile("^X(\d+): \"(.+)\"")
+        regexPatternTranslation = re.compile("^X(\d+): \"(.+)\"?")
 
         for element in elements:
             translation = str(element.string)
