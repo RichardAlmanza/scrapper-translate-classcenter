@@ -85,6 +85,7 @@ def findContent(func, parentElement):
 def translateContentAfterBulkTranslation(parentElement):
     findContent(translateContent, parentElement)
 
+
 htmlPath = sys.argv[1]
 
 with open(htmlPath, "r") as file:
@@ -96,8 +97,5 @@ soup.smooth()
 loadBulkToTranslate(soup)
 translateContentAfterBulkTranslation(soup)
 
-with open("test1.html", "wb") as file:
+with open(htmlPath, "wb") as file:
     file.write(soup.prettify("utf-8"))
-
-# with open(htmlPath, "wb") as file:
-#     file.write(soup.prettify("utf-8"))

@@ -1,5 +1,6 @@
 import time
 import re
+import pickle
 from typing import Union
 from urllib.parse import quote as urlEncode
 from bs4 import BeautifulSoup
@@ -18,6 +19,16 @@ class GoogleTranslator():
 
 
     def __init__(self, options: Union[str, list[str]] = "--headless", timeout: int = 10):
+        try:
+            with open("GoogleTranslatorObject", "rb") as f:
+                pack = pickle.load(f)
+                self._textId = pack[0]
+                self._texts = pack[1]
+                self._translations = pack[2]
+
+        except FileNotFoundError:
+            pass
+
         if type(options) == str:
             options = [options]
 
@@ -120,6 +131,19 @@ class GoogleTranslator():
         return textChunks
 
 
+    def save(self):
+        try:
+            with open("GoogleTranslatorObject", "wb") as f:
+                pack = [
+                    self._textId,
+                    self._texts,
+                    self._translations
+                ]
+                pickle.dump(pack, f)
+
+        except FileNotFoundError:
+            pass
+
     def translate(self, textsToTranslate: Union[str, list[str]], sourceLanguage: str = "en",
                   destinationLanguage: str = "hi") -> dict[str, str]:
 
@@ -138,6 +162,7 @@ class GoogleTranslator():
                 translations = self._getResponse()
                 self._saveTranslations(translations)
 
+        self.save()
         return self._returnTranslations(textsToTranslate)
 
 
