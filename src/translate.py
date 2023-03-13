@@ -58,7 +58,7 @@ class GoogleTranslator():
             time.sleep(waitingTime)
             counter += waitingTime
 
-            soup = BeautifulSoup(self._driver.page_source, "html.parser")
+            soup = BeautifulSoup(self._driver.page_source, "lxml")
             elements = soup.findAll("span", {"class": self._keyClassNameToGetTranslations})
 
         return elements

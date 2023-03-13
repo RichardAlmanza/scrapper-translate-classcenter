@@ -1,11 +1,12 @@
 import sys
 import re
 from bs4 import BeautifulSoup
+from bs4.element import Comment, Doctype, NavigableString
 from translate import GoogleTranslator
 
-
-translator = GoogleTranslator(options="")
-elements = ["span", "p", "a", "h1", "h2", "h3", "h4", "h5", "strong", "i"]
+translator = GoogleTranslator()
+tagsToIgnore = set(["script","style","svg","link"])
+typesToIgnore = set([Comment, Doctype])
 ignoreText = set([
     "Class Central",
 ])
@@ -20,54 +21,63 @@ def translateContent(element, originLanguage="en", destinationLanguage="hi"):
     regexPatternStrippedString = re.compile(f'({re.escape(strippedString)})')
 
     translation = translator.translate(strippedString, originLanguage, destinationLanguage)
-    print(translation)
 
-    content = element.find(string=regexPatternStrippedString)
-    content.replaceWith(translation[strippedString])
+    if type(element) == NavigableString:
+        element.replaceWith(translation[strippedString])
+    else:
+        content = element.find(string=regexPatternStrippedString)
+        content.replaceWith(translation[strippedString])
 
 
-def loadBulkToTranslate():
+def loadBulkToTranslate(parentElement):
     textList = []
 
     def appendToTextList(element) -> None:
         string = str(element.string).strip()
         textList.append(string)
 
-    findContent(appendToTextList)
+    findContent(appendToTextList, parentElement)
     translateBulk(textList)
 
 
-def findContent(func):
-    for elementToFind in elements:
-        for element in soup.findAll(elementToFind):
+def findContent(func, parentElement):
+    for element in parentElement.children:
 
-            strippedString = str(element.string).strip()
+        strippedString = str(element.string).strip()
 
-            if element.string == None:
-                continue
+        if type(element) in typesToIgnore:
+            continue
 
-            if strippedString in ignoreText:
-                continue
+        if element.name in tagsToIgnore:
+            continue
 
-            if strippedString == "":
-                continue
+        if element.string == None:
+            if element.contents != []:
+                findContent(func, element)
+            continue
 
-            func(element)
+        if strippedString in ignoreText:
+            continue
+
+        if strippedString == "":
+            continue
+
+        func(element)
 
 
-def translateContentAfterBulkTranslation():
-    findContent(translateContent)
+def translateContentAfterBulkTranslation(parentElement):
+    findContent(translateContent, parentElement)
 
 htmlPath = "/home/anaeru/repositories/personal/scrapper-translate-classcenter/httrack-output/www.classcentral.com/index.html" # sys.argv[1]
 
 with open(htmlPath, "r") as file:
     html = file.read()
 
-soup = BeautifulSoup(html, "html.parser")
+soup = BeautifulSoup(html, "lxml")
 soup.smooth()
 
-loadBulkToTranslate()
-translateContentAfterBulkTranslation()
+loadBulkToTranslate(soup)
+translateContentAfterBulkTranslation(soup)
 
 with open("test1.html", "wb") as file:
     file.write(soup.prettify("utf-8"))
