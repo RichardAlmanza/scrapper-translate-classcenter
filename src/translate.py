@@ -16,6 +16,10 @@ class GoogleTranslator():
     _translations = {}
     _keyClassNameToGetTranslations = "ryNqvb"
     _translatorURL = "https://translate.google.com/"
+    _regexPatternTranslation = re.compile("^X(\d+): \"(.+)\"?")
+    _patternCheck = re.compile("^X(\d+):")
+
+
 
 
     def __init__(self, options: Union[str, list[str]] = "--headless", timeout: int = 10):
@@ -76,7 +80,7 @@ class GoogleTranslator():
 
 
     def _saveTranslations(self, elements) -> None:
-        regexPatternTranslation = re.compile("^X(\d+): \"(.+)\"?")
+        lastRef = ""
 
         for element in elements:
             translation = str(element.string)
@@ -84,9 +88,14 @@ class GoogleTranslator():
             if translation.strip() == "":
                 continue
 
-            translation = regexPatternTranslation.findall(translation)[0]
+            if self._patternCheck.match(translation) == None:
+                self._translations[lastRef] = f"{self._translations[lastRef]}{translation}"
+                continue
+
+            translation = self._regexPatternTranslation.findall(translation)[0]
 
             self._translations[translation[0]] = translation[1]
+            lastRef = translation[0]
 
 
     def _getUrlForTranslation(self, textToTranslate, sourceLanguage: str, destinationLanguage: str) -> str:
