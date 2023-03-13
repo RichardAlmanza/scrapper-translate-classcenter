@@ -47,11 +47,13 @@ download_js_files() {
     done
 }
 
-find_and_replace_webpack_paths_in_html_files() {
+find_html_files_and_translate_them() {
     html_files=($(find -type f -iname "*.html"))
 
     for html in "${html_files[@]}"; do
-        sed --in-place --expression "s/\/webpack\//webpack\//g" "$html"
+        html_abs_path=$(readlink -e $html)
+        echo $html
+        python "$wdir/src/scraper.py" $html_abs_path
     done
 }
 
@@ -68,3 +70,9 @@ docker run \
     --rm \
     -v $PWD/httrack-output/www.classcentral.com:/usr/share/nginx/html:ro \
     --detach --publish 8080:80 nginx
+
+pushd "$web_path/$base_url"
+
+    find_html_files_and_translate_them
+
+popd
