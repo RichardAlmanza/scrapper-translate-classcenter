@@ -48,7 +48,7 @@ download_js_files() {
 }
 
 find_html_files_and_translate_them() {
-    html_list="$wdir/html_files.lst"
+    html_list="$wdir/html_list.lst"
     failed="$wdir/failed.lst"
     done_html="$wdir/done.lst"
     logs="$wdir/logs"
