@@ -5,6 +5,7 @@ from bs4.element import Comment, Doctype, NavigableString, Tag
 from translate import GoogleTranslator
 
 translator = GoogleTranslator()
+wordRe = re.compile("[(\w+)(\d+)]")
 attributesToTranslate = set(["placeholder", "aria-label", "alt"])
 tagsToIgnore = set(["script","style","svg","link"])
 typesToIgnore = set([Comment, Doctype])
@@ -42,7 +43,7 @@ def loadBulkToTranslate(parentElement):
 
 
 def translateAttributes(func, element, attr):
-    if element[attr] == "":
+    if wordRe.match(element[attr]) == None:
         return
 
     if func != translateContent:
@@ -76,7 +77,7 @@ def findContent(func, parentElement):
         if strippedString in ignoreText:
             continue
 
-        if strippedString == "":
+        if wordRe.match(strippedString) == None:
             continue
 
         func(element)

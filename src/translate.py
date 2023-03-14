@@ -14,24 +14,17 @@ class GoogleTranslator():
     _textId = 0
     _texts = {}
     _translations = {}
+    _refTexts = {}
     _keyClassNameToGetTranslations = "ryNqvb"
     _translatorURL = "https://translate.google.com/"
-    _regexPatternTranslation = re.compile("^X(\d+): \"(.+)\"?")
-    _patternCheck = re.compile("^X(\d+):")
+    _regexPatternTranslation = re.compile("^(MSI\d+H): (.+)")
+    _patternCheck = re.compile("^(MSI\d+H):")
 
 
 
 
     def __init__(self, options: Union[str, list[str]] = "--headless", timeout: int = 10):
-        try:
-            with open("GoogleTranslatorObject", "rb") as f:
-                pack = pickle.load(f)
-                self._textId = pack[0]
-                self._texts = pack[1]
-                self._translations = pack[2]
-
-        except FileNotFoundError:
-            pass
+        # self.load()
 
         if type(options) == str:
             options = [options]
@@ -49,13 +42,29 @@ class GoogleTranslator():
         self._driver.get(self._translatorURL)
 
 
+    def load(self) -> bool:
+        try:
+            with open("GoogleTranslatorObject", "rb") as f:
+                pack = pickle.load(f)
+                self._textId = pack[0]
+                self._texts = pack[1]
+                self._translations = pack[2]
+                self._refTexts = pack[3]
+
+            return True
+
+        except FileNotFoundError:
+            return False
+
+
     def _addTextsToTranslate(self, textsToTranslate: list[str]) -> list[str]:
         textListToTranslate = []
 
         for text in textsToTranslate:
             if text not in self._texts:
-                textListToTranslate.append(f'X{self._textId}: "{text}"')
-                self._texts[text] = str(self._textId)
+                textListToTranslate.append(f'MSI{self._textId}H: {text}')
+                self._texts[text] = f'MSI{self._textId}H'
+                self._refTexts[f'MSI{self._textId}H'] = text
                 self._textId += 1
 
         return textListToTranslate
@@ -115,27 +124,21 @@ class GoogleTranslator():
         return results
 
 
-    def _createChucks(self, textsToTranslate: str) -> list[str]:
+    def _createChucks(self, textsToTranslate: list[str]) -> list[list[str]]:
         textChunks = []
+        tempList= []
+        counter = 0
 
-        pointerStart = 0
-        lastIndex = 0
-        index = 0
-        offset = 0
+        for text in textsToTranslate:
+            if counter + len(text) > self._chunkSizeForTranslations:
+                textChunks.append(tempList)
+                tempList = []
+                counter = 0
 
-        try:
-            while True:
-                while index - offset < self._chunkSizeForTranslations:
-                    lastIndex = index + 1
-                    index = textsToTranslate.index("\n", lastIndex)
+            tempList.append(text)
+            counter += len(text)
 
-                textChunks.append(textsToTranslate[pointerStart:lastIndex - 1])
-                pointerStart = lastIndex
-                lastIndex = pointerStart
-                offset = pointerStart
-
-        except ValueError:
-            textChunks.append(textsToTranslate[pointerStart:])
+        textChunks.append(tempList)
 
         return textChunks
 
@@ -146,7 +149,8 @@ class GoogleTranslator():
                 pack = [
                     self._textId,
                     self._texts,
-                    self._translations
+                    self._translations,
+                    self._refTexts,
                 ]
                 pickle.dump(pack, f)
 
@@ -160,18 +164,19 @@ class GoogleTranslator():
             textsToTranslate = [textsToTranslate]
 
         newTextsToTranslate = self._addTextsToTranslate(textsToTranslate)
-        joinedTextToTranslate = "\n".join(newTextsToTranslate)
-        textChucks = self._createChucks(joinedTextToTranslate)
+        textChucks = self._createChucks(newTextsToTranslate)
 
         for textChuck in textChucks:
-            if textChuck != "":
-                url = self._getUrlForTranslation(textChuck, sourceLanguage, destinationLanguage)
-                self._driver.get(url)
+            if textChuck == []:
+                continue
 
-                translations = self._getResponse()
-                self._saveTranslations(translations)
+            url = self._getUrlForTranslation("\n".join(textChuck), sourceLanguage, destinationLanguage)
+            self._driver.get(url)
 
-        self.save()
+            translations = self._getResponse()
+            self._saveTranslations(translations)
+
+        # self.save()
         return self._returnTranslations(textsToTranslate)
 
 
