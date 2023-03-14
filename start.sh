@@ -65,7 +65,7 @@ find_html_files_and_translate_them() {
 
         echo "working on $log_ref"
         log_ref=$(echo $log_ref | sed -e "s/\//_/g")
-        result=$(python "$wdir/src/scraper.py" "$html" > "$logs/$log_ref.log" && echo "true" || echo "false")
+        result=$(python "$wdir/src/scraper.py" "$html" 2>&1 > "$logs/$log_ref.log" && echo "true" || echo "false")
 
         if [[ "$result" == "false" ]]; then
             echo "$html" >> $failed
