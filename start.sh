@@ -48,13 +48,31 @@ download_js_files() {
 }
 
 find_html_files_and_translate_them() {
-    html_files=($(find -type f -iname "*.html"))
+    html_list="$wdir/html_files.lst"
+    failed="$wdir/failed.lst"
+    done_html="$wdir/done.lst"
+    logs="$wdir/logs"
 
-    for html in "${html_files[@]}"; do
-        html_abs_path=$(readlink -e $html)
-        echo $html
-        python "$wdir/src/scraper.py" $html_abs_path
-    done
+    while read -r html; do
+        is_done=$(grep "$html" < "$done_html" || grep "$html" < "$failed" || echo "false")
+
+        if [[ "$is_done" == "$html" ]]; then
+            continue
+        fi
+
+        escaped_wdir=$(echo $wdir | sed -e "s/\//\\\\\//g")
+        log_ref=$(echo "$html" | sed -e "s/$escaped_wdir\///g")
+
+        echo "working on $log_ref"
+        result=$(python "$wdir/src/scraper.py" $html_abs_path > "$logs/$log_ref.log" && echo "true" || echo "false")
+
+        if [[ "$result" == "false" ]]; then
+            echo "$html" >> $failed
+            continue
+        fi
+
+        echo "$html" >> $done_html
+    done < $html_list
 }
 
 download_website_with_httrack
@@ -71,8 +89,6 @@ docker run \
     -v $PWD/httrack-output/www.classcentral.com:/usr/share/nginx/html:ro \
     --detach --publish 8080:80 nginx
 
-pushd "$web_path/$base_url"
 
-    find_html_files_and_translate_them
+find_html_files_and_translate_them
 
-popd
